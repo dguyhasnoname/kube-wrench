@@ -3,6 +3,7 @@ start_time = time.time()
 from modules.logging import Logger
 from modules.argparse import ArgParse
 from modules.kube_config import KubeConfig
+from modules.resource_quota import ResourceQuotaWrench
 from modules.pods import PodWrench
 from modules.output import Output
 
@@ -14,6 +15,7 @@ class KubeWrench():
 
     def kube_wrench(self):
         self.logger.info("Starting kube-wrench.")
+        ResourceQuotaWrench(self.k8s_config, self.namespace, self.logger).resource_quota_wrench()
         PodWrench(self.k8s_config, self.namespace, self.logger).pod_wrench()
 
 def main():

@@ -2,8 +2,7 @@
 import kubernetes.client
 from kubernetes.client.rest import ApiException
 from .containers import ContainerWrench
-from .resource_quota import ResourceQuotaWrench
-
+from .service import ServiceWrench
 
 class PodWrench:
     """
@@ -129,7 +128,7 @@ class PodWrench:
             )
         return pod_node_chk_result
 
-    def check_pod_status(self, pod):
+    def check_pod_status(self, pod, svc):
         """[Get status of a pod in a namespace]
 
         Args:
@@ -140,7 +139,6 @@ class PodWrench:
         """
         pod_status = pod.status.phase
         container = ContainerWrench(self.k8s_config, self.namespace, self.logger)
-        quota = ResourceQuotaWrench(self.k8s_config, self.namespace, self.logger)
         if pod_status == "Running":
             self.logger.info(
                 "Pod %s/%s is in %s phase.",
@@ -149,6 +147,7 @@ class PodWrench:
                 pod_status,
             )
             container.container_wrench(pod)
+            svc.service_wrench(pod)
         elif pod_status in ["Pending", "Failed", "Unknown"]:
             self.logger.warning(
                 "Pod %s/%s is in %s phase.",
@@ -158,7 +157,6 @@ class PodWrench:
             )
             if PodWrench.pod_node_status(self, pod):
                 PodWrench.pod_pvc_status(self, pod)
-                ResourceQuotaWrench.resource_quota_wrench(self)
                 container.container_wrench(pod)
         elif pod_status == "Succeeded":
             self.logger.info(
@@ -175,9 +173,10 @@ class PodWrench:
     def pod_wrench(self):
         """[Get status of all pods in a namespace]"""
         pods = PodWrench.get_pods(self)
+        svc = ServiceWrench(self.k8s_config, self.namespace, self.logger)
         if pods:
             for pod in pods.items:
                 self.logger.debug(
                     "Checking status of pod: %s/%s ", self.namespace, pod.metadata.name
                 )
-                PodWrench.check_pod_status(self, pod)
+                PodWrench.check_pod_status(self, pod, svc)
