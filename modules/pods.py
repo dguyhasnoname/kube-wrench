@@ -1,9 +1,9 @@
 """[Module to process pods]"""
 import kubernetes.client
 from kubernetes.client.rest import ApiException
-from .output import Output
 from .containers import ContainerWrench
 from .resource_quota import ResourceQuotaWrench
+
 
 class PodWrench:
     """
@@ -143,12 +143,18 @@ class PodWrench:
         quota = ResourceQuotaWrench(self.k8s_config, self.namespace, self.logger)
         if pod_status == "Running":
             self.logger.info(
-                "Pod %s/%s is in %s phase.", self.namespace, pod.metadata.name, pod_status
+                "Pod %s/%s is in %s phase.",
+                self.namespace,
+                pod.metadata.name,
+                pod_status,
             )
             container.container_wrench(pod)
         elif pod_status in ["Pending", "Failed", "Unknown"]:
             self.logger.warning(
-                "Pod %s/%s is in %s phase.", self.namespace, pod.metadata.name, pod_status
+                "Pod %s/%s is in %s phase.",
+                self.namespace,
+                pod.metadata.name,
+                pod_status,
             )
             if PodWrench.pod_node_status(self, pod):
                 PodWrench.pod_pvc_status(self, pod)

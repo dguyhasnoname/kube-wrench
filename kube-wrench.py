@@ -4,6 +4,7 @@ from modules.logging import Logger
 from modules.argparse import ArgParse
 from modules.kube_config import KubeConfig
 from modules.pods import PodWrench
+from modules.output import Output
 
 class KubeWrench():
     def __init__(self, logger, k8s_config, namespace):
@@ -23,7 +24,7 @@ def main():
     namespace = args.namespace
     call = KubeWrench(logger, k8s_config, namespace)
     call.kube_wrench()
-
+    Output.time_taken(start_time)
 
 if __name__ == "__main__":
     try:
