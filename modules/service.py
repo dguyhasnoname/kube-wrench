@@ -24,6 +24,11 @@ class ServiceWrench:
             )
 
     def service_wrench(self, pod):
+        """[Get service details for the pod]
+
+        Args:
+            pod ([dict]): [Pod details in dict]
+        """
         self.logger.debug(
             "Analyzing service mapped to pod %s/%s.", self.namespace, pod.metadata.name
         )
@@ -32,13 +37,20 @@ class ServiceWrench:
             mapping = []
             for selector_name in svc.spec.selector:
                 try:
-                    if svc.spec.selector[selector_name] in pod.metadata.labels[selector_name]:
+                    if (
+                        svc.spec.selector[selector_name]
+                        in pod.metadata.labels[selector_name]
+                    ):
                         mapping.append(True)
                     else:
                         mapping.append(False)
                 except KeyError:
-                    self.logger.debug("Label %s not found in pod %s.", selector_name, pod.metadata.name)
-            # print(mapping)
+                    self.logger.debug(
+                        "Label %s not found in pod %s.",
+                        selector_name,
+                        pod.metadata.name,
+                    )
+
             if all(mapping) and mapping:
                 svc_mapped_to_pod = svc.metadata.name
                 if "ClusterIP" in svc.spec.type:
@@ -67,4 +79,3 @@ class ServiceWrench:
                         svc_mapped_to_pod,
                         svc.spec.ports[0].node_port,
                     )
-
