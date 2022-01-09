@@ -1,6 +1,7 @@
 """[Module to process service details]"""
 import kubernetes.client
 from kubernetes.client.rest import ApiException
+from .ingress import IngressWrench
 
 
 class ServiceWrench:
@@ -13,7 +14,7 @@ class ServiceWrench:
         with kubernetes.client.ApiClient(k8s_config) as api_client:
             self.core = kubernetes.client.CoreV1Api(api_client)
 
-        self.logger.info("Fetching %s namespace services data.", self.namespace)
+        self.logger.debug("Fetching %s namespace services data.", self.namespace)
         try:
             self.services = self.core.list_namespaced_service(
                 self.namespace, timeout_seconds=10
@@ -84,6 +85,17 @@ class ServiceWrench:
                         svc_mapped_to_pod,
                         svc.spec.ports[0].node_port,
                     )
+                if "ExternalName" in svc.spec.type:
+                    self.logger.info(
+                        "%s service is mapped to pod %s/%s is %s. External name: %s",
+                        svc.spec.type,
+                        self.namespace,
+                        pod.metadata.name,
+                        svc_mapped_to_pod,
+                        svc.spec.external_name,
+                    )
+
+                IngressWrench(self.k8s_config, self.namespace, self.logger).ingress_wrench(svc)
 
         if not svc_mapped_to_pod:
             self.logger.info(
