@@ -25,7 +25,7 @@ class PodWrench:
         try:
             self.logger.info("Fetching %s namespace pods data.", self.namespace)
             pods = self.core.list_namespaced_pod(self.namespace, timeout_seconds=10)
-            self.logger.info("Fetched pod data for namespace %s", self.namespace)
+            self.logger.debug("Fetched pod data for namespace %s", self.namespace)
             # self.logger.debug("Pod details: %s", pods)
             return pods
         except ApiException as exp:

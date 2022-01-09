@@ -20,7 +20,7 @@ class NameSpaceWrench:
         Returns:
             [list]: [List of namespaces]
         """
-        self.logger.info("Fetching namespace list in the cluster.")
+        self.logger.debug("Fetching namespace list in the cluster.")
         try:
             ns_list = self.core.list_namespace(timeout_seconds=10)
             return ns_list
@@ -39,7 +39,7 @@ class NameSpaceWrench:
         Returns:
             [list]: [list of namespace events]
         """
-        self.logger.info("Fetching namespace events in the cluster.")
+        self.logger.debug("Fetching namespace events in the cluster.")
         try:
             ns_events = self.core.list_namespaced_event(namespace, timeout_seconds=10)
         except ApiException as exp:
