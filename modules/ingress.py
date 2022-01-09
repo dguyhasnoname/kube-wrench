@@ -2,7 +2,6 @@
 import kubernetes.client
 from kubernetes.client.rest import ApiException
 import requests
-import requests.exceptions
 
 
 class IngressWrench:
@@ -27,6 +26,14 @@ class IngressWrench:
             )
 
     def ingress_wrench(self, svc):
+        """[Analyze ingress status]
+
+        Args:
+            svc ([dict]): [Service details]
+
+        Returns:
+            ingress name [str]: [Ingress name]
+        """
         ing_mapped_to_svc = ""
         self.logger.debug(
             "Analyzing ingress mapped to service %s/%s.",
@@ -40,7 +47,8 @@ class IngressWrench:
                         if path.backend.service.name in svc.metadata.name:
                             ing_mapped_to_svc = ing.metadata.name
                             self.logger.info(
-                                "Ingress %s is mapped to service %s/%s. Host/Path: %s%s. Path type: %s.",
+                                "Ingress %s is mapped to service %s/%s. Host/Path: %s%s. "
+                                "Path type: %s.",
                                 ing_mapped_to_svc,
                                 self.namespace,
                                 svc.metadata.name,
@@ -49,57 +57,62 @@ class IngressWrench:
                                 path.path_type,
                             )
                             try:
+                                uri = "http://" + rule.host + path.path
                                 response = requests.get(
-                                    "http://{}{}".format(rule.host, path.path),
+                                    uri,
                                     timeout=5,
                                 )
-                                status_code = status_code
+                                status_code = response.status_code
                             except requests.exceptions.Timeout:
                                 self.logger.warning(
-                                    "Timeout exception when calling http://{}{}.".format(
-                                        rule.host, path.path
-                                    )
+                                    "Timeout exception when calling http://%s%s.",
+                                    rule.host,
+                                    path.path,
                                 )
                                 status_code = "408"
                             except requests.exceptions.TooManyRedirects:
                                 self.logger.warning(
-                                    "Too many redirects when calling http://{}{}.".format(
-                                        rule.host, path.path
-                                    )
+                                    "Too many redirects when calling http://%s%s.",
+                                    rule.host,
+                                    path.path,
                                 )
                                 status_code = ""
 
                             if status_code == 200:
                                 self.logger.info(
-                                    "Service %s/%s mapped with ingress %s working. Response code: %s",
+                                    "Service %s/%s mapped with ingress %s working. "
+                                    "Response code: %s",
                                     self.namespace,
                                     svc.metadata.name,
                                     ing_mapped_to_svc,
-                                    status_code
+                                    status_code,
                                 )
                             elif status_code == 302:
                                 self.logger.info(
-                                    "Service %s/%s mapped with ingress %s seems to responding. Response code: %s",
+                                    "Service %s/%s mapped with ingress %s seems to responding. "
+                                    "Response code: %s",
                                     self.namespace,
                                     svc.metadata.name,
                                     ing_mapped_to_svc,
-                                    status_code
+                                    status_code,
                                 )
                             elif status_code in [400, 404, 500, 501, 502, 503, 504]:
                                 self.logger.warning(
-                                    "Service %s/%s mapped with ingress %s is not working. Response code: %s",
+                                    "Service %s/%s mapped with ingress %s is not working. "
+                                    "Response code: %s",
                                     self.namespace,
                                     svc.metadata.name,
                                     ing_mapped_to_svc,
-                                    status_code
+                                    status_code,
                                 )
                             else:
                                 self.logger.warning(
-                                    "Service %s/%s mapped with ingress %s needs to checked. Response code: %s",
+                                    "Service %s/%s mapped with ingress %s needs to checked. "
+                                    "Response code: %s",
                                     self.namespace,
                                     svc.metadata.name,
                                     ing_mapped_to_svc,
-                                    status_code
+                                    status_code,
                                 )
                             break
             except AttributeError:
