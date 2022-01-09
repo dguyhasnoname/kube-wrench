@@ -35,21 +35,26 @@ class ServiceWrench:
         svc_mapped_to_pod = ""
         for svc in self.services.items:
             mapping = []
-            for selector_name in svc.spec.selector:
-                try:
-                    if (
-                        svc.spec.selector[selector_name]
-                        in pod.metadata.labels[selector_name]
-                    ):
-                        mapping.append(True)
-                    else:
-                        mapping.append(False)
-                except KeyError:
-                    self.logger.debug(
-                        "Label %s not found in pod %s.",
-                        selector_name,
-                        pod.metadata.name,
-                    )
+            try:
+                for selector_name in svc.spec.selector:
+                    try:
+                        if (
+                            svc.spec.selector[selector_name]
+                            in pod.metadata.labels[selector_name]
+                        ):
+                            mapping.append(True)
+                        else:
+                            mapping.append(False)
+                    except KeyError:
+                        self.logger.debug(
+                            "Label %s not found in pod %s.",
+                            selector_name,
+                            pod.metadata.name,
+                        )
+            except TypeError:
+                self.logger.debug(
+                    "No selector found in service %s.", svc.metadata.name
+                )
 
             if all(mapping) and mapping:
                 svc_mapped_to_pod = svc.metadata.name
@@ -79,3 +84,9 @@ class ServiceWrench:
                         svc_mapped_to_pod,
                         svc.spec.ports[0].node_port,
                     )
+
+        if not svc_mapped_to_pod:
+            self.logger.info(
+                "No service is mapped to pod %s/%s.", self.namespace, pod.metadata.name
+            )
+        return svc_mapped_to_pod
