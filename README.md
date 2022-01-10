@@ -64,8 +64,8 @@ Running the docker image:
     -n NAMESPACE, --namespace NAMESPACE
                             check resources in specific namespace.
     -o OUTPUT, --output OUTPUT
-                            output formats csv|json|tree. Default is text on stdout.
-    --loglevel LOGLEVEL   sets logging level. default is INFO
+                            output formats json|text. Default is text on stdout.
+    --loglevel LOGLEVEL   sets logging level WARNING|DEBUG. default is INFO
     --silent              silence the logging.
 
 ## Sample run

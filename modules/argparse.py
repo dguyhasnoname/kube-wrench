@@ -24,10 +24,10 @@ class ArgParse:
             "-o",
             "--output",
             default="stdout",
-            help="output formats csv|json|tree. Default is text on stdout.",
+            help="output formats json|text. Default is text on stdout.",
         )
         p.add_argument(
-            "--loglevel", default="INFO", help="sets logging level. default is INFO"
+            "--loglevel", default="INFO", help="sets logging level WARNING|DEBUG. default is INFO."
         )
         p.add_argument("--silent", action="store_true", help="silence the logging.")
 
