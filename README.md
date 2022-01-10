@@ -8,7 +8,7 @@ An automated way on troubleshooting Kubernetes deployments. This tool is based o
 
 2. `pip3` needs to be installed to get required packages. You need to install above packages with command:x
 
-    `pip3 install -r requirements.txt`
+    pip3 install -r requirements.txt
 
 3. KUBECONFIG for the cluster needs to be exported as env. It is read by kube-wrench to connect to the cluster to get details.
 
@@ -18,10 +18,13 @@ An automated way on troubleshooting Kubernetes deployments. This tool is based o
 
 Once above pre-requisites are installed and configured, you are ready to run kube-wrenchas below after cloning the repo:
 
-1. Change dir: `cd kube-wrench`
+1. Change dir:
+
+    cd kube-wrench
+
 2. Run script:
 
-    ```python3 kube-wrench.py```
+    python3 kube-wrench.py
 
 ### running by using docker image
 
