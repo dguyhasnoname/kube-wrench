@@ -16,7 +16,7 @@ An automated way on troubleshooting Kubernetes deployments. This tool is based o
 
 ### running kube-wrench directly using python
 
-Once above pre-requisites are installed and configured, you are ready to run kube-wrenchas below after cloning the repo:
+Once above pre-requisites are installed and configured, you are ready to run kube-wrench as below after cloning the repo:
 
 1. Change dir:
 
