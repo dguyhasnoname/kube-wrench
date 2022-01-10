@@ -24,6 +24,32 @@ class ServiceWrench:
                 "Exception when calling CoreV1Api->list_namespaced_service: %s", exp
             )
 
+    def svc_type_check(self, svc, svc_mapped_to_pod, pod):
+        """[Check service type]
+
+        Args:
+            svc ([dict]): [Service object in dict]
+            svc_mapped_to_pod ([str]): [Service name mapped to pod]
+            pod ([dict]): [Pod object in dict]
+        """
+        svc_type = svc.spec.type
+        if "ClusterIP" in svc_type:
+            svc_detail = svc.spec.cluster_ip
+        if "LoadBalancer" in svc_type:
+            svc_detail = svc.status.load_balancer.ingress[0].hostname
+        if "NodePort" in svc_type:
+            svc_detail = svc.spec.ports[0].node_port
+        if "ExternalName" in svc_type:
+            svc_detail = svc.spec.external_name
+        self.logger.info(
+            "Service %s is mapped to pod %s/%s. %s: %s",
+            svc_mapped_to_pod,
+            self.namespace,
+            pod.metadata.name,
+            svc_type,
+            svc_detail,
+        )
+
     def service_wrench(self, pod):
         """[Get service details for the pod]
 
@@ -59,42 +85,7 @@ class ServiceWrench:
 
             if all(mapping) and mapping:
                 svc_mapped_to_pod = svc.metadata.name
-                if "ClusterIP" in svc.spec.type:
-                    self.logger.info(
-                        "%s service %s is mapped to pod %s/%s.",
-                        svc.spec.type,
-                        svc_mapped_to_pod,
-                        self.namespace,
-                        pod.metadata.name,
-                    )
-                if "LoadBalancer" in svc.spec.type:
-                    self.logger.info(
-                        "%s service is mapped to pod %s/%s is %s. Load balancer: %s",
-                        svc.spec.type,
-                        self.namespace,
-                        pod.metadata.name,
-                        svc_mapped_to_pod,
-                        svc.status.load_balancer.ingress[0].hostname,
-                    )
-                if "NodePort" in svc.spec.type:
-                    self.logger.info(
-                        "%s service is mapped to pod %s/%s is %s. Node port: %s",
-                        svc.spec.type,
-                        self.namespace,
-                        pod.metadata.name,
-                        svc_mapped_to_pod,
-                        svc.spec.ports[0].node_port,
-                    )
-                if "ExternalName" in svc.spec.type:
-                    self.logger.info(
-                        "%s service is mapped to pod %s/%s is %s. External name: %s",
-                        svc.spec.type,
-                        self.namespace,
-                        pod.metadata.name,
-                        svc_mapped_to_pod,
-                        svc.spec.external_name,
-                    )
-
+                self.svc_type_check(svc, svc_mapped_to_pod, pod)
                 IngressWrench(self.k8s_config, self.namespace, self.logger).ingress_wrench(svc)
 
         if not svc_mapped_to_pod:
