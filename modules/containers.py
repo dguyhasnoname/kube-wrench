@@ -158,10 +158,7 @@ class ContainerWrench:
                         pod.metadata.name,
                         container.state.terminated.message,
                     )
-                if (
-                    "ContainerCannotRun"
-                    in container.state.terminated.reason
-                ):
+                if "ContainerCannotRun" in container.state.terminated.reason:
                     self.logger.warning(
                         "Please check configurations inside the container image. Container %s in "
                         "pod %s/%s termination reason: ContainerCannotRun. Message: %s",
@@ -218,7 +215,12 @@ class ContainerWrench:
                     container.state.waiting.reason,
                     container.restart_count,
                 )
-                if "ImagePullBackOff" in container.state.waiting.reason:
+                # container first goes in ErrImagePull and then ImagePullBackOff state
+                if container.state.waiting.reason in [
+                    "ImagePullBackOff",
+                    "ErrImagePull",
+                    "ErrImageNeverPull",
+                ]:
                     self.logger.warning(
                         "Failed pulling the image %s for container %s in pod %s/%s. Message: %s",
                         container.image,
@@ -226,6 +228,27 @@ class ContainerWrench:
                         self.namespace,
                         pod.metadata.name,
                         container.state.waiting.message,
+                    )
+                    if not pod.spec.image_pull_secrets:
+                        self.logger.warning(
+                            "No image pull secrets defined for pod %s/%s.",
+                            self.namespace,
+                            pod.metadata.name,
+                        )
+                    for cont in pod.spec.containers:
+                        if (
+                            cont.name in container.name
+                            and "Never" in cont.image_pull_policy
+                        ):
+                            self.logger.warning(
+                                "Image pull policy is set to %s for container %s",
+                                cont.image_pull_policy,
+                                cont.name,
+                            )
+                if "RegistryUnavailable" in container.state.waiting.reason:
+                    self.logger.warning(
+                        "Unable to connect to the image registry for container %s.",
+                        container.name,
                     )
                 if "InvalidImageName" in container.state.waiting.reason:
                     self.logger.warning(
@@ -236,32 +259,23 @@ class ContainerWrench:
                         pod.metadata.name,
                         container.state.waiting.message,
                     )
-                if "ErrImagePull" in container.state.waiting.reason:
+                if "CreateContainerConfigError" in container.state.waiting.reason:
                     self.logger.warning(
-                        "Error pulling image %s for container %s in pod %s/%s. Message: %s",
-                        container.image,
+                        "Unable to create the container configuration used by kubelet. "
+                        "Error creating container %s in pod %s/%s.  Message: %s",
                         container.name,
                         self.namespace,
                         pod.metadata.name,
                         container.state.waiting.message,
                     )
-                if (
-                    "CreateContainerConfigError"
-                    in container.state.waiting.reason
-                ):
+                if container.state.waiting.reason in [
+                    "RunContainerError",
+                    "CreateContainerError",
+                ]:
                     self.logger.warning(
-                        "Container experienced an error when starting. Error creating "
-                        "container %s in pod %s/%s.  Message: %s",
-                        container.name,
-                        self.namespace,
-                        pod.metadata.name,
-                        container.state.waiting.message,
-                    )
-                if "CreateContainerError" in container.state.waiting.reason:
-                    self.logger.warning(
-                        "Container configruation e.g. configMap, secret may be missing"
-                        ". Error while creating the container %s in pod %s/%s. "
-                        "Message: %s",
+                        "Possible issues: Mounting a not-existent volume e.g. ConfigMap or Secrets"
+                        ", Mounting a read-only volume as read-write. Error while creating the "
+                        "container %s in pod %s/%s. Message: %s",
                         container.name,
                         self.namespace,
                         pod.metadata.name,
@@ -272,23 +286,49 @@ class ContainerWrench:
                 if "ContainerCreating" in container.state.waiting.reason:
                     self.logger.warning(
                         "Possibly awaiting for some other condition. Container %s is "
-                        "creating in pod %s/%s.  Message: %s",
+                        "creating in pod %s/%s. Message: %s",
                         container.name,
                         self.namespace,
                         pod.metadata.name,
                         container.state.waiting.message,
                     )
-                if "CrashLoopBackOff" in container.state.waiting.reason:
+                if container.state.waiting.reason in [
+                    "ImageInspectError",
+                    "CrashLoopBackOff",
+                ]:
                     if container.restart_count > 2:
                         self.logger.warning(
-                            "Please check the health probes of the pod. Container %s"
-                            " in pod %s/%s is restarting frequently.",
+                            "Possible reason for CrashLoopBackOff status of Container %s in pod "
+                            "%s/%s: misconfigured container image, error in the application or "
+                            "Health probes failed too many times.",
                             container.name,
                             self.namespace,
                             pod.metadata.name,
                         )
                     ContainerWrench.get_container_logs(
                         self, pod.metadata.name, container.name
+                    )
+                if "NetworkPluginNotReady" in container.state.waiting.reason:
+                    self.logger.warning("Network plugin not ready.")
+                if "DockerDaemonNotReady" in container.state.waiting.reason:
+                    self.logger.warning("Docker daemon not ready.")
+                if "PreStartHookError" in container.state.waiting.reason:
+                    self.logger.warning(
+                        "preStart hook execution error for container %s in pod "
+                        "%s/%s. Message: %s",
+                        container.name,
+                        self.namespace,
+                        pod.metadata.name,
+                        container.state.waiting.message,
+                    )
+                if "PostStartHookError" in container.state.waiting.reason:
+                    self.logger.warning(
+                        "postStart hook execution error for container %s in pod "
+                        "%s/%s. Message: %s",
+                        container.name,
+                        self.namespace,
+                        pod.metadata.name,
+                        container.state.waiting.message,
                     )
         except KeyError:
             self.logger.warning(
@@ -321,11 +361,12 @@ class ContainerWrench:
                         self.namespace,
                         pod.metadata.name,
                     )
+                    # https://main.qcloudimg.com/raw/document/intl/product/pdf/457_35659_en.pdf
                     ContainerWrench.container_terminated(self, container, pod)
                     ContainerWrench.container_waiting(self, container, pod)
         except TypeError:
             self.logger.warning(
-                "No containers found in pod %s/%s.",
+                "No running containers found in pod %s/%s.",
                 self.namespace,
                 pod.metadata.name,
             )
