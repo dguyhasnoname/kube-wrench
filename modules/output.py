@@ -1,6 +1,4 @@
-from packaging import version
 import os, re, time, json, csv, math
-from tabulate import tabulate
 
 
 class Output:
