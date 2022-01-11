@@ -25,7 +25,7 @@ class ResourceQuotaWrench:
             [int]: [Quota usage percentage]
         """
         try:
-            quota_usage_percentage = round((quota_used / quota_hard_limit * 100), 2)
+            quota_usage_percentage = round((quota_used / quota_hard_limit * 100), 3)
             return quota_usage_percentage
         except ZeroDivisionError:
             self.logger.warning(
