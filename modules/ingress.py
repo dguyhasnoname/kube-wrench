@@ -38,7 +38,14 @@ class IngressWrench:
         """
         try:
             response = requests.get(uri, timeout=5, allow_redirects=False)
-        except ConnectionError as err:
+            response.raise_for_status()
+        except requests.exceptions.RequestException as exp:
+            self.logger.warning("Exception when calling requests.get: %s", exp)
+            response = 401
+        except requests.exceptions.HTTPError as err:
+            self.logger.warning("Http Error: %s", err)
+            response = ""
+        except requests.exceptions.ConnectionError as err:
             self.logger.warning("%s", err)
             response = ""
         except requests.exceptions.Timeout as err:
@@ -83,7 +90,6 @@ class IngressWrench:
                             if ing_mapped_to_svc:
                                 uri = "https://" + host + host_path
                                 response = self.test_ingress_url(uri)
-                                print(response)
                                 if not response:
                                     self.logger.info(
                                         "Request to https URL failed. Tyring http URL."
