@@ -150,6 +150,20 @@ class ServiceWrench:
                 svc_mapped_to_pod = svc.metadata.name
                 self.svc_type_check(svc, svc_mapped_to_pod, pod)
                 self.pod_svc_port_chk(pod, svc)
+                # pod IP address allocation check
+                if pod.status.pod_ip:
+                    self.logger.info(
+                        "Pod %s/%s has IP address allocated: %s.",
+                        self.namespace,
+                        pod.metadata.name,
+                        pod.status.pod_ip,
+                    )
+                else:
+                    self.logger.warning(
+                        "Pod %s/%s has no IP address allocated.",
+                        self.namespace,
+                        pod.metadata.name,
+                    )
                 IngressWrench(
                     self.k8s_config, self.namespace, self.logger
                 ).ingress_wrench(svc)
