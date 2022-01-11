@@ -24,6 +24,71 @@ class ServiceWrench:
                 "Exception when calling CoreV1Api->list_namespaced_service: %s", exp
             )
 
+    def pod_svc_port_chk(self, pod, svc):
+        """[Pod and service port mapping check]
+
+        Args:
+            pod ([dict]): [Pod details in dict]
+            svc ([dict]): [Service details in dict]
+        """
+        self.logger.debug(
+            "Comparing pod %s and it's service %s port mappings in namespace %s.",
+            pod.metadata.name,
+            svc.metadata.name,
+            self.namespace,
+        )
+        for cont in pod.spec.containers:
+            if cont.ports:
+                for port in cont.ports:
+                    port_match = False
+                    for svc_port in svc.spec.ports:
+                        if str(port.container_port) in str(svc_port.port):
+                            self.logger.info(
+                                "containerPort/name: %s/%s of container %s in pod %s is matching to"
+                                " service %s port/name: %s/%s. Protocol: %s",
+                                port.container_port,
+                                port.name,
+                                cont.name,
+                                pod.metadata.name,
+                                svc.metadata.name,
+                                svc_port.port,
+                                svc_port.name,
+                                svc_port.protocol,
+                            )
+                            port_match = True
+                            break
+                        if str(port.container_port) in str(svc_port.target_port) or str(svc_port.target_port) in str(port.name):
+                            self.logger.info(
+                                "containerPort/name: %s/%s of container %s in pod %s is matching to"
+                                " service %s targetPort/name: %s/%s. Protocol: %s",
+                                port.container_port,
+                                port.name,
+                                cont.name,
+                                pod.metadata.name,
+                                svc.metadata.name,
+                                svc_port.target_port,
+                                svc_port.name,
+                                svc_port.protocol,
+                            )
+                            port_match = True
+                            break
+                    if not port_match:
+                        self.logger.warning(
+                            "containerPort port: %s of container %s in pod %s is not matching to"
+                            " any of service %s ports: %s.",
+                            port.container_port,
+                            cont.name,
+                            pod.metadata.name,
+                            svc.metadata.name,
+                            svc.spec.ports,
+                        )
+            else:
+                self.logger.info(
+                    "containerPort not defined for container %s in pod %s.",
+                    cont.name,
+                    pod.metadata.name,
+                )
+
     def svc_type_check(self, svc, svc_mapped_to_pod, pod):
         """[Check service type]
 
@@ -79,14 +144,15 @@ class ServiceWrench:
                             pod.metadata.name,
                         )
             except TypeError:
-                self.logger.debug(
-                    "No selector found in service %s.", svc.metadata.name
-                )
+                self.logger.debug("No selector found in service %s.", svc.metadata.name)
 
             if all(mapping) and mapping:
                 svc_mapped_to_pod = svc.metadata.name
                 self.svc_type_check(svc, svc_mapped_to_pod, pod)
-                IngressWrench(self.k8s_config, self.namespace, self.logger).ingress_wrench(svc)
+                self.pod_svc_port_chk(pod, svc)
+                IngressWrench(
+                    self.k8s_config, self.namespace, self.logger
+                ).ingress_wrench(svc)
 
         if not svc_mapped_to_pod:
             self.logger.info(
