@@ -30,7 +30,7 @@ class NameSpaceWrench:
             )
             return None
 
-    def get_ns_events(self, namespace):
+    def get_ns_events(self, namespace, pod_name):
         """[Get namespace events]
 
         Args:
@@ -50,9 +50,9 @@ class NameSpaceWrench:
 
         if ns_events.items:
             for event in ns_events.items:
-                if not "Normal" in event.type:
+                if not "Normal" in event.type and event.involved_object.name in pod_name:
                     self.logger.warning(
-                        "Event: %s %s %s/%s. Message: %s. Node: %s",
+                        "Event related: %s %s %s/%s. Message: %s. Node: %s",
                         event.reason,
                         event.involved_object.kind,
                         event.involved_object.namespace,
