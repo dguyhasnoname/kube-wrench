@@ -3,6 +3,7 @@ import kubernetes.client
 from kubernetes.client.rest import ApiException
 from .containers import ContainerWrench
 from .service import ServiceWrench
+from .namespace import NameSpaceWrench
 
 class PodWrench:
     """
@@ -139,6 +140,7 @@ class PodWrench:
         """
         pod_status = pod.status.phase
         container = ContainerWrench(self.k8s_config, self.namespace, self.logger)
+        ns_events = NameSpaceWrench(self.k8s_config, self.logger)
         if pod_status == "Running":
             self.logger.info(
                 "Pod %s/%s is in %s phase.",
@@ -157,6 +159,7 @@ class PodWrench:
             )
             if PodWrench.pod_node_status(self, pod):
                 PodWrench.pod_pvc_status(self, pod)
+                ns_events.get_ns_events(self.namespace, pod.metadata.name)
                 container.container_wrench(pod)
         elif pod_status == "Succeeded":
             self.logger.info(
