@@ -27,7 +27,6 @@ class KubeWrench:
         ResourceQuotaWrench(
             self.k8s_config, self.namespace, self.logger
         ).resource_quota_wrench()
-        NameSpaceWrench(self.k8s_config, self.logger).get_ns_events(self.namespace)
 
     def kube_wrench_main(self):
         """[Kube-wrench main function]"""
