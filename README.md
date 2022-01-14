@@ -70,19 +70,4 @@ Running the docker image:
 
 ## Sample run
 
-
-    [01:18 PM IST 10.01.2022 ☸ 127.0.0.1:56036 📁 kube-wrench ❱ main ▲]
-    ┗━ ॐ  docker run -it --rm -v ~/k8sconfig/:/app/k8sconfig/ -e KUBECONFIG=/app/k8sconfig/kubeconfig.yaml docker.io/dguyhasnoname/kube-wrench:0.1.0
-    [INFO] Using kubeconfig from env.
-    [INFO] Starting kube-wrench.
-    [INFO] No namespace specified. Kube-wrench will run on default namespace.
-    [INFO] Fetching default namespace pods data.
-    [INFO] Pod default/dnsutils is in Running phase.
-    [INFO] No service is mapped to pod default/dnsutils.
-    [INFO] No resource quota found in namespace default.
-    [WARNING] Event: SystemOOM Node None/ip-10-10-81-111.internal. Message: (combined from similar events): System OOM encountered, victim process: nri-kubernetes, pid: 3438502. Node:
-    [WARNING] Event: FailedCreate Job default/k8s-v1-predelete-hook-15426. Message: Error creating: pods "k8s-v1-predelete-hook-15426-" is forbidden: error looking up service account default/hub: serviceaccount "hub" not found. Node:
-    [WARNING] Event: FailedCreate ReplicaSet default/nginx-ingress-controller-7d778fc4d4. Message: Error creating: pods "nginx-ingress-controller-7d778fc4d4-" is forbidden: error looking up service account default/helm: serviceaccount "helm" not found. Node:
-
-    Total time taken: 4.72s
-
+![sample](./docs/imgs/sample.png)
