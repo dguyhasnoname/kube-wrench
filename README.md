@@ -1,5 +1,7 @@
 ## kube-wrench
 
+<img src="./docs/imgs/logo.png" align="right" width="120px"/>
+
 An automated way on troubleshooting Kubernetes deployments. This tool is based on visual guide on [troubleshooting Kubernetes deployment](https://learnk8s.io/troubleshooting-deployments).
 
 ## Pre-requisites
